@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoreo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      name: grafana
+      labels:
+        app: grafana
+    spec:
+      nodeSelector:
+        beta.kubernetes.io/arch: arm64
+      containers:
+      - name: grafana
+        image: grafana/grafana:6.6.2
+        ports:
+        - name: grafana
+          containerPort: 3000
+        env:
+          - name: GF_SERVER_ROOT_URL
+            value: "http://grafana.internal.local.com"
+          - name: GF_AUTH_BASIC_ENABLED
+            value: "true"
+          - name: GF_SECURITY_ADMIN_USER
+            valueFrom:
+              secretKeyRef:
+                name: grafana
+                key: admin-username
+          - name: GF_SECURITY_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: grafana
+                key: admin-password
+          - name: GF_AUTH_ANONYMOUS_ENABLED
+            value: "false"
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "600m"
+          requests: 
+            memory: "500Mi"
+            cpu: "400m"
+        volumeMounts:
+          - mountPath: /var/lib/grafana
+            name: grafana-storage
+          - mountPath: /etc/grafana/provisioning/datasources
+            name: grafana-datasources
+            readOnly: false
+        readinessProbe:
+          httpGet:
+            path: /login
+            port: 3000
+          initialDelaySeconds: 60
+          timeoutSeconds: 5
+      volumes:
+        - name: grafana-storage
+          persistentVolumeClaim:
+            claimName: grafana-storage
+        - name: grafana-datasources
+          configMap:
+              defaultMode: 420
+              name: grafana-datasources

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: monitoreo
+data:
+  influxdb.yaml: |-
+    apiVersion: 1
+    datasources:
+      - name: myinflux
+        type: influxdb
+        access: proxy
+        database: site
+        user: grafana
+        password: grafana
+        url: http://influxdb-svc
+        jsonData:
+          httpMode: GET

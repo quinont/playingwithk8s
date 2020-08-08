@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegraf
+  namespace: monitoreo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telegraf
+  template:
+    metadata:
+      name: telegraf
+      labels:
+        app: telegraf
+    spec:
+      nodeSelector:
+        beta.kubernetes.io/arch: arm64
+      containers:
+      - name: telegraf
+        image: telegraf:1.13.2
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "600m"
+          requests: 
+            memory: "500Mi"
+            cpu: "400m"
+        volumeMounts:
+          - mountPath: /etc/telegraf
+            name: telegraf-conf
+            readOnly: true
+      volumes:
+        - name: telegraf-conf
+          configMap:
+              defaultMode: 420
+              name: telegraf-conf
+

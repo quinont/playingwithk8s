@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test
+  namespace: monitoreo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test
+  template:
+    metadata:
+      name: test
+      labels:
+        app: test
+    spec:
+      nodeSelector:
+        beta.kubernetes.io/arch: arm64
+      containers:
+      - name: test
+        image: quinont/mqttclient:1
+        command: ["/bin/bash"]
+        args: ["-c", "while true; do mosquitto_pub -m \"$(($RANDOM % 200))\" -t \"sensors/pieza/temperatura\" -h 192.168.1.192; sleep 60; echo OK; done"]
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "600m"
+          requests: 
+            memory: "500Mi"
+            cpu: "400m"

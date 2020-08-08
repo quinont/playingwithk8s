@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb
+  namespace: monitoreo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      name: influxdb
+      labels:
+        app: influxdb
+    spec:
+      nodeSelector:
+        beta.kubernetes.io/arch: arm64
+      containers:
+      - name: influxdb
+        image: influxdb:1.7.9
+        ports:
+        - name: api
+          containerPort: 8086
+        - name: graphite
+          containerPort: 2003
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "600m"
+          requests: 
+            memory: "500Mi"
+            cpu: "400m"
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: api
+          initialDelaySeconds: 120
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: api
+          initialDelaySeconds: 120
+          timeoutSeconds: 3 
+        envFrom:
+        - configMapRef:
+            name: influxdb-datasources
+        env:
+        - name: INFLUXDB_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: influxdb
+              key: admin-username
+        - name: INFLUXDB_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: influxdb
+              key: admin-password
+        volumeMounts:
+        - mountPath: /var/lib/influxdb
+          name: influxdb-storage
+      volumes:
+      - name: influxdb-storage
+        persistentVolumeClaim:
+          claimName: influxdb-storage

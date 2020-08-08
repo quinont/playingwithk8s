@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: monitoreo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test
+  template:
+    metadata:
+      name: test
+      labels:
+        app: test
+    spec:
+      nodeSelector:
+        beta.kubernetes.io/arch: arm64
+      containers:
+      - name: test
+        image: quinont/mqttclient:1
+        command: ["/bin/bash"]
+        args: ["-c", "while true; do mosquitto_pub -m \"1\" -t \"medir/casa/habitaciones/planta01/todo\" -h 192.168.1.192; echo \". \"; sleep 60; done"]
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "600m"
+          requests: 
+            memory: "500Mi"
+            cpu: "400m"
